@@ -1,14 +1,18 @@
 package ntilde.com.learnenglishnumbers;
+import android.text.TextUtils;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Clase para trabajar con numeros en ingles
  */
 public class EnglishNumber {
 	
-	private static Map<Long,String> numbers=new HashMap<>();
+	private static Map<Long,String> numbers=new HashMap<Long,String>();
+	private static Map<String,Long> revnumbers=new HashMap<String,Long>();
 	static{
 		numbers.put(0L, "");
 		numbers.put(1L, "one");
@@ -41,6 +45,9 @@ public class EnglishNumber {
 		numbers.put(100L, "hundred");
 		numbers.put(1000L, "thousand");
 		numbers.put(1000000L, "million");
+		for(Entry<Long, String> number:numbers.entrySet()){
+			revnumbers.put(number.getValue(), number.getKey());
+		}
 	}
 	
 	/**
@@ -70,6 +77,41 @@ public class EnglishNumber {
 			english=digitsToEnglish(big/1000000)+" "+numbers.get(1000000L)+" "+digitsToEnglish(digits-big);
 		}
 		return english.replaceAll("\\s+", " ");
+	}
+	
+	/**
+	 * Convierte un numero (en ingles) a cifras
+	 * @param english Cadena en ingles que representa un numero
+	 * @return Numero (en cifras) con que se corresponde el parametro de entrada
+	 */
+	public static long englishToDigits(String english){
+		String digits="";
+		String[] englishSplitted=english.trim().split(" ");
+		long d;
+		for(int i=0;i<englishSplitted.length;i++) {
+			Long number=revnumbers.get(englishSplitted[i]);
+			if(number>=20&&number<=90){
+				digits+=i==englishSplitted.length-1||englishSplitted[i+1].equalsIgnoreCase(numbers.get(1000L))?number:number/10;
+			}
+			else if(number==100){
+				d=englishToDigits(TextUtils.join(" ",Arrays.copyOfRange(englishSplitted, i+1, englishSplitted.length)));
+				if(i+1<englishSplitted.length&&englishSplitted[i+1].equalsIgnoreCase(numbers.get(1000L))){
+					digits+="00";
+				}
+				else{
+					digits+=d==0||d>=100&&d<=999?"00":d>=1&&d<=9||d>=1000&&d<=9999?"0":"";
+				}
+			}
+			else if(number==1000||number==1000000){
+				d=englishToDigits(TextUtils.join(" ",Arrays.copyOfRange(englishSplitted, i+1, englishSplitted.length)));
+				digits+=new String(new char[String.valueOf(number).length()-1-String.valueOf(d).length()]).replace("\0", "0");
+				return Long.parseLong(digits+d);
+			}
+			else{
+				digits+=number;
+			}
+		}
+		return Long.parseLong(digits);
 	}
 	
 	/**
